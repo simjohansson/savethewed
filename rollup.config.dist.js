@@ -1,8 +1,9 @@
 import commonjs from 'rollup-plugin-commonjs';
 import resolve from 'rollup-plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
-import { uglify } from 'rollup-plugin-uglify';
+import { terser } from 'rollup-plugin-terser';
 import typescript from 'rollup-plugin-typescript2';
+import copy from 'rollup-plugin-copy';
 
 export default {
 
@@ -24,6 +25,12 @@ export default {
     },
 
     plugins: [
+        copy({
+            targets: [
+              { src: 'src/assets', dest: 'dist/' },
+              { src: 'src/index.html', dest: 'dist/' },
+            ],
+          }),
 
         //  Toggle the booleans here to enable / disable Phaser 3 features:
         replace({
@@ -57,7 +64,7 @@ export default {
         typescript(),
 
         //  See https://www.npmjs.com/package/rollup-plugin-uglify for config options
-        uglify({
+        terser({
             mangle: false
         })
 

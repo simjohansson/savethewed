@@ -3,6 +3,8 @@ import resolve from 'rollup-plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import serve from 'rollup-plugin-serve';
 import typescript from 'rollup-plugin-typescript2';
+import livereload from 'rollup-plugin-livereload';
+import copy from 'rollup-plugin-copy';
 
 export default {
 
@@ -24,6 +26,12 @@ export default {
     },
 
     plugins: [
+        copy({
+            targets: [
+              { src: 'src/assets', dest: 'dist/' },
+              { src: 'src/index.html', dest: 'dist/' },
+            ],
+          }),
 
         //  Toggle the booleans here to enable / disable Phaser 3 features:
         replace({
@@ -65,7 +73,9 @@ export default {
             headers: {
                 'Access-Control-Allow-Origin': '*'
             }
-        })
+        }),
+
+        livereload('dist')
 
     ]
 };
