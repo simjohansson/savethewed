@@ -6,6 +6,14 @@ export default class Demo extends Phaser.Scene {
     }
     private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
     private player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+    private platforms: Phaser.Physics.Arcade.StaticGroup;
+    private bombs: Phaser.Physics.Arcade.Group;
+    private score = 0;
+    private scoreText;
+    private gameOver = false;
+    private touchMoving = "";
+    private beforeJumpMoving = "";
+
 
     preload() {
         this.load.image('sky', 'assets/sky.png');
@@ -20,13 +28,13 @@ export default class Demo extends Phaser.Scene {
 
     create() {
         this.add.image(400, 300, 'sky');
-        const platforms = this.physics.add.staticGroup();
+        this.platforms = this.physics.add.staticGroup();
 
-        platforms.create(400, 568, 'ground').setScale(2).refreshBody();
+        this.platforms.create(400, 568, 'ground').setScale(2).refreshBody();
 
-        platforms.create(600, 400, 'ground');
-        platforms.create(50, 250, 'ground');
-        platforms.create(750, 220, 'ground');
+        this.platforms.create(600, 400, 'ground');
+        this.platforms.create(50, 250, 'ground');
+        this.platforms.create(750, 220, 'ground');
 
         this.player = this.physics.add.sprite(100, 450, 'dude');
 
@@ -53,30 +61,96 @@ export default class Demo extends Phaser.Scene {
             repeat: -1
         });
 
-        this.physics.add.collider(this.player, platforms);
+        this.physics.add.collider(this.player, this.platforms);
         this.cursors = this.input.keyboard.createCursorKeys();
-        const stars = this.physics.add.group({
-            key: 'star',
-            repeat: 11,
-            setXY: { x: 12, y: 0, stepX: 70 }
-        });
+        this.createStar();
+        this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', color: '#000' });
 
-        stars.children.iterate(function (child) {
+        this.bombs = this.physics.add.group();
 
-            (child.body as Phaser.Physics.Arcade.Body).setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+        this.physics.add.collider(this.bombs, this.platforms);
 
-        });
-        this.physics.add.collider(stars, platforms);
+        this.physics.add.collider(this.player, this.bombs, this.hitBomb, null, this);
+        this.input.on('pointerdown', () => {
+
+            if (this.game.input.activePointer.x > this.player.x) {
+                if (this.touchMoving === "right") {
+                    this.beforeJumpMoving = "right";
+                    this.touchMoving = "jump";
+                } else {
+                    this.touchMoving = "right";
+
+                }
+            }
+            else if (this.game.input.activePointer.x < this.player.x) {
+                if (this.touchMoving === "left") {
+                    this.beforeJumpMoving = "left";
+                    this.touchMoving = "jump";
+                } else {
+                    this.touchMoving = "left";
+
+                }
+            }
+        })
+    }
+
+    hitBomb(player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody, bomb: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody) {
+        this.physics.pause();
+
+        this.player.setTint(0xff0000);
+
+        this.player.anims.play('turn');
+
+        this.gameOver = true;
+    }
+
+    collectStar(player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody, star: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody) {
+        this.score += 10;
+        this.scoreText.setText('Score: ' + this.score);
+
+
+
+        const xPosition = Phaser.Math.FloatBetween(12, 70 * 11);
+        const yPosition = Phaser.Math.FloatBetween(0, 500);
+
+        Phaser.Actions.SetXY([star], xPosition, yPosition);
+
+        const xBomb = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+
+        var bomb = this.bombs.create(xBomb, 16, 'bomb');
+        bomb.setBounce(1);
+        bomb.setCollideWorldBounds(true);
+        bomb.setVelocity(Phaser.Math.Between(-200, 200), 20)
+    }
+
+    createStar() {
+
+        const xPosition = Phaser.Math.FloatBetween(12, 70 * 11);
+        const yPosition = Phaser.Math.FloatBetween(0, 500);
+        const star = this.physics.add.sprite(xPosition, yPosition, 'star');
+
+        (star.body as Phaser.Physics.Arcade.Body).setBounceY(Phaser.Math.FloatBetween(0.4, 0.6));
+        this.physics.add.collider(star, this.platforms);
+        this.physics.add.overlap(this.player, star, this.collectStar, null, this);
     }
 
     update() {
+        if (this.gameOver) {
+            if (this.cursors.shift.isDown) {
+                this.gameOver = false;
+                this.score = 0;
+                this.scene.restart();
+            } else {
+                return;
+            }
+        }
 
-        if (this.cursors.left.isDown) {
+        if (this.cursors.left.isDown || this.touchMoving === "left") {
             this.player.setVelocityX(-160);
 
             this.player.anims.play('left', true);
         }
-        else if (this.cursors.right.isDown) {
+        else if (this.cursors.right.isDown || this.touchMoving === "right") {
             this.player.setVelocityX(160);
 
             this.player.anims.play('right', true);
@@ -87,7 +161,8 @@ export default class Demo extends Phaser.Scene {
             this.player.anims.play('turn');
         }
 
-        if (this.cursors.up.isDown && this.player.body.touching.down) {
+        if ((this.cursors.up.isDown || this.touchMoving === "jump") && this.player.body.touching.down) {
+            this.touchMoving = this.beforeJumpMoving;
             this.player.setVelocityY(-330);
         }
     }
