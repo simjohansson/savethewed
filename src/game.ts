@@ -13,6 +13,7 @@ export default class Demo extends Phaser.Scene {
     private gameOver = false;
     private touchMoving = "";
     private beforeJumpMoving = "";
+    private playerName = "";
 
 
     preload() {
@@ -24,6 +25,8 @@ export default class Demo extends Phaser.Scene {
             'assets/dude.png',
             { frameWidth: 32, frameHeight: 48 }
         );
+        this.load.spritesheet('fullscreen', 'assets/fullscreen.png', { frameWidth: 64, frameHeight: 64 });
+        this.load.html('nameform', 'assets/nameform.html');
     }
 
     create() {
@@ -71,6 +74,25 @@ export default class Demo extends Phaser.Scene {
         this.physics.add.collider(this.bombs, this.platforms);
 
         this.physics.add.collider(this.player, this.bombs, this.hitBomb, null, this);
+
+        const button = this.add.image(800 - 16, 16, 'fullscreen', 0).setOrigin(1, 0).setInteractive();
+
+        button.on('pointerup', function () {
+
+            if (this.scale.isFullscreen) {
+                button.setFrame(0);
+
+                this.scale.stopFullscreen();
+            }
+            else {
+                button.setFrame(1);
+
+                this.scale.startFullscreen();
+            }
+
+        }, this);
+
+
         this.input.on('pointerdown', () => {
 
             if (this.game.input.activePointer.x > this.player.x) {
@@ -91,7 +113,57 @@ export default class Demo extends Phaser.Scene {
 
                 }
             }
-        })
+        });
+
+        if (this.playerName) {
+            this.add.text(300, 10, 'Välkommen ' + this.playerName, { color: 'white', fontSize: '20px ' });
+
+        } else {
+
+            const text = this.add.text(300, 10, 'Skriv ditt namn', { color: 'white', fontSize: '20px ' });
+
+            const element = this.add.dom(400, 0).createFromCache('nameform');
+
+            element.addListener('click');
+            let that = this;
+            element.on('click', function (event) {
+
+                if (event.target.name === 'playButton') {
+                    var inputText = this.getChildByName('nameField');
+
+                    //  Have they entered anything?
+                    if (inputText.value !== '') {
+                        //  Turn off the click events
+                        this.removeListener('click');
+
+                        //  Hide the login element
+                        this.setVisible(false);
+
+                        //  Populate the text with whatever they typed in
+                        text.setText('Välkommen ' + inputText.value);
+                        that.playerName = inputText.value;
+                    }
+                    else {
+                        //  Flash the prompt
+                        this.scene.tweens.add({
+                            targets: text,
+                            alpha: 0.2,
+                            duration: 250,
+                            ease: 'Power3',
+                            yoyo: true
+                        });
+                    }
+                }
+
+            });
+            this.tweens.add({
+                targets: element,
+                y: 300,
+                duration: 3000,
+                ease: 'Power3'
+            });
+        }
+
     }
 
     hitBomb(player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody, bomb: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody) {
@@ -125,7 +197,7 @@ export default class Demo extends Phaser.Scene {
 
     createStar() {
 
-        const xPosition = Phaser.Math.FloatBetween(12, 70 * 11);
+        const xPosition = 70 * 9;
         const yPosition = Phaser.Math.FloatBetween(0, 500);
         const star = this.physics.add.sprite(xPosition, yPosition, 'star');
 
@@ -135,6 +207,10 @@ export default class Demo extends Phaser.Scene {
     }
 
     update() {
+        if (!this.playerName) {
+            return;
+        }
+
         if (this.gameOver) {
             if (this.cursors.shift.isDown) {
                 this.gameOver = false;
@@ -165,13 +241,25 @@ export default class Demo extends Phaser.Scene {
             this.touchMoving = this.beforeJumpMoving;
             this.player.setVelocityY(-330);
         }
+
+        if (this.cursors.up.isDown || this.cursors.left.isDown || this.cursors.right.isDown) {
+            this.touchMoving = "";
+        }
     }
 }
 
 const config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
+    scale: {
+        mode: Phaser.Scale.FIT,
+        parent: 'phaser-example',
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: 800,
+        height: 600
+    },
+    dom: {
+        createContainer: true
+    },
     physics: {
         default: 'arcade',
         arcade: {
