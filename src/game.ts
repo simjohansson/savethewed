@@ -15,8 +15,8 @@ export default class Demo extends Phaser.Scene {
     private beforeJumpMoving = "";
     private playerName = "";
 
-
     preload() {
+        console.log(__config.env.BACKEND_URL);
         this.load.image('sky', 'assets/sky.png');
         this.load.image('ground', 'assets/platform.png');
         this.load.image('star', 'assets/star.png');
@@ -166,7 +166,7 @@ export default class Demo extends Phaser.Scene {
 
     }
 
-    hitBomb(player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody, bomb: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody) {
+    async hitBomb(player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody, bomb: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody) {
         this.physics.pause();
 
         this.player.setTint(0xff0000);
@@ -174,6 +174,19 @@ export default class Demo extends Phaser.Scene {
         this.player.anims.play('turn');
 
         this.gameOver = true;
+        // const response = await fetch(process.env.backendurl, {
+        //     method: 'POST', // *GET, POST, PUT, DELETE, etc.
+        //     mode: 'cors', // no-cors, *cors, same-origin
+        //     cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+        //     credentials: 'same-origin', // include, *same-origin, omit
+        //     headers: {
+        //       'Content-Type': 'application/json'
+        //       // 'Content-Type': 'application/x-www-form-urlencoded',
+        //     },
+        //     redirect: 'follow', // manual, *follow, error
+        //     referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+        //     body: JSON.stringify({name: this.playerName, score: this.score}) // body data type must match "Content-Type" header
+        //   });
     }
 
     collectStar(player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody, star: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody) {

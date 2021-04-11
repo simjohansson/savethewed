@@ -4,6 +4,8 @@ import replace from '@rollup/plugin-replace';
 import { terser } from 'rollup-plugin-terser';
 import typescript from 'rollup-plugin-typescript2';
 import copy from 'rollup-plugin-copy';
+import dotenv from 'dotenv';
+dotenv.config();
 
 export default {
 
@@ -34,6 +36,9 @@ export default {
 
         //  Toggle the booleans here to enable / disable Phaser 3 features:
         replace({
+            __config : JSON.stringify({
+                env: process.env
+            }),
             'typeof CANVAS_RENDERER': JSON.stringify(true),
             'typeof WEBGL_RENDERER': JSON.stringify(true),
             'typeof EXPERIMENTAL': JSON.stringify(true),
