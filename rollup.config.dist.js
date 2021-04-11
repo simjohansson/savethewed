@@ -66,7 +66,7 @@ export default {
         }),
 
         //  See https://www.npmjs.com/package/rollup-plugin-typescript2 for config options
-        typescript(),
+        typescript({abortOnError: false}),
 
         //  See https://www.npmjs.com/package/rollup-plugin-uglify for config options
         terser({
