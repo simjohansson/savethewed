@@ -17,6 +17,7 @@ export default class Demo extends Phaser.Scene {
 
     preload() {
         console.log(__config.env.BACKEND_URL);
+        
         this.load.image('sky', 'assets/sky.png');
         this.load.image('ground', 'assets/platform.png');
         this.load.image('star', 'assets/star.png');
