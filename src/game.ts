@@ -7,7 +7,7 @@ export default class Demo extends Phaser.Scene {
     private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
     private player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
     private platforms: Phaser.Physics.Arcade.StaticGroup;
-    private bombs: Phaser.Physics.Arcade.Group;
+    private covids: Phaser.Physics.Arcade.Group;
     private score = 0;
     private scoreText;
     private gameOver = false;
@@ -19,10 +19,10 @@ export default class Demo extends Phaser.Scene {
 
         this.load.image('sky', 'assets/sky.png');
         this.load.image('ground', 'assets/platform.png');
-        this.load.image('star', 'assets/star.png');
-        this.load.image('bomb', 'assets/bomb.png');
+        this.load.image('star', 'assets/star_simon.png');
+        this.load.image('covid', 'assets/covid.png');
         this.load.spritesheet('dude',
-            'assets/dude.png',
+            'assets/dude_caroline.png',
             { frameWidth: 32, frameHeight: 48 }
         );
         this.load.spritesheet('fullscreen', 'assets/fullscreen.png', { frameWidth: 64, frameHeight: 64 });
@@ -69,11 +69,11 @@ export default class Demo extends Phaser.Scene {
         this.createStar();
         this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', color: '#000' });
 
-        this.bombs = this.physics.add.group();
+        this.covids = this.physics.add.group();
 
-        this.physics.add.collider(this.bombs, this.platforms);
+        this.physics.add.collider(this.covids, this.platforms);
 
-        this.physics.add.collider(this.player, this.bombs, this.hitBomb, null, this);
+        this.physics.add.collider(this.player, this.covids, this.hitCovid, null, this);
 
         const button = this.add.image(800 - 16, 16, 'fullscreen', 0).setOrigin(1, 0).setInteractive();
 
@@ -166,7 +166,7 @@ export default class Demo extends Phaser.Scene {
 
     }
 
-    async hitBomb(player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody, bomb: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody) {
+    async hitCovid(player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody, covid: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody) {
         this.physics.pause();
 
         this.player.setTint(0xff0000);
@@ -195,12 +195,12 @@ export default class Demo extends Phaser.Scene {
 
         Phaser.Actions.SetXY([star], xPosition, yPosition);
 
-        const xBomb = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+        const xcovid = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
 
-        var bomb = this.bombs.create(xBomb, 16, 'bomb');
-        bomb.setBounce(1);
-        bomb.setCollideWorldBounds(true);
-        bomb.setVelocity(Phaser.Math.Between(-200, 200), 20)
+        var covid = this.covids.create(xcovid, 16, 'covid');
+        covid.setBounce(1);
+        covid.setCollideWorldBounds(true);
+        covid.setVelocity(Phaser.Math.Between(-200, 200), 20)
     }
 
     createStar() {
