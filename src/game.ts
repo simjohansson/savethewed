@@ -14,6 +14,8 @@ export default class Demo extends Phaser.Scene {
     private touchMoving = "";
     private beforeJumpMoving = "";
     private playerName = "";
+    private resetClicked = false;
+    private restartButton: Phaser.GameObjects.Image;
 
     preload() {
 
@@ -21,6 +23,7 @@ export default class Demo extends Phaser.Scene {
         this.load.image('ground', 'assets/platform.png');
         this.load.image('star', 'assets/star_simon.png');
         this.load.image('covid', 'assets/covid.png');
+        this.load.image('restart', 'assets/restart.png');
         this.load.spritesheet('dude',
             'assets/dude_caroline.png',
             { frameWidth: 32, frameHeight: 48 }
@@ -75,26 +78,9 @@ export default class Demo extends Phaser.Scene {
 
         this.physics.add.collider(this.player, this.covids, this.hitCovid, null, this);
 
-        const button = this.add.image(800 - 16, 16, 'fullscreen', 0).setOrigin(1, 0).setInteractive();
-
-        button.on('pointerup', function () {
-
-            if (this.scale.isFullscreen) {
-                button.setFrame(0);
-
-                this.scale.stopFullscreen();
-            }
-            else {
-                button.setFrame(1);
-
-                this.scale.startFullscreen();
-            }
-
-        }, this);
-
+        this.restartButton = this.add.image(400, 300, 'restart').setVisible(false);
 
         this.input.on('pointerdown', () => {
-
             if (this.game.input.activePointer.x > this.player.x) {
                 if (this.touchMoving === "right") {
                     this.beforeJumpMoving = "right";
@@ -117,6 +103,8 @@ export default class Demo extends Phaser.Scene {
 
         if (this.playerName) {
             this.add.text(300, 10, 'Välkommen ' + this.playerName, { color: 'white', fontSize: '20px ' });
+
+            this.AddZoomButton();
 
         } else {
 
@@ -142,6 +130,8 @@ export default class Demo extends Phaser.Scene {
                         //  Populate the text with whatever they typed in
                         text.setText('Välkommen ' + inputText.value);
                         that.playerName = inputText.value;
+                        that.AddZoomButton();
+
                     }
                     else {
                         //  Flash the prompt
@@ -166,6 +156,21 @@ export default class Demo extends Phaser.Scene {
 
     }
 
+    private AddZoomButton() {
+        const button = this.add.image(800 - 16, 16, 'fullscreen', 0).setOrigin(1, 0).setInteractive();
+
+        button.on('pointerup', function () {
+            if (this.scale.isFullscreen) {
+                button.setFrame(0);
+                this.scale.stopFullscreen();
+            }
+            else {
+                button.setFrame(1);
+                this.scale.startFullscreen();
+            }
+        }, this);
+    }
+
     async hitCovid(player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody, covid: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody) {
         this.physics.pause();
 
@@ -174,14 +179,19 @@ export default class Demo extends Phaser.Scene {
         this.player.anims.play('turn');
 
         this.gameOver = true;
-        const response = await fetch(__config.env.BACKEND_URL + "/api/posthighscore", {
+        this.restartButton.setVisible(true).setInteractive();
+        let that = this;
+        this.restartButton.on('pointerup', function () {
+            that.resetClicked = true;
+        });
+        await fetch(__config.env.BACKEND_URL + "/api/posthighscore", {
             method: 'POST', // *GET, POST, PUT, DELETE, etc.
             headers: {
-              'Content-Type': 'application/json'
-              // 'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json'
+                // 'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: JSON.stringify({name: this.playerName, score: this.score}) // body data type must match "Content-Type" header
-          });
+            body: JSON.stringify({ name: this.playerName, score: this.score })
+        });
     }
 
     collectStar(player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody, star: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody) {
@@ -220,7 +230,9 @@ export default class Demo extends Phaser.Scene {
         }
 
         if (this.gameOver) {
-            if (this.cursors.shift.isDown) {
+            if (this.cursors.shift.isDown || this.resetClicked) {
+                this.resetClicked = false;
+                this.restartButton.setVisible(false).removeAllListeners();
                 this.gameOver = false;
                 this.score = 0;
                 this.scene.restart();
